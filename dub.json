@@ -1,0 +1,9 @@
+{
+	"description": "Super cool language",
+	"authors": [
+		"Cameron Baybut"
+	],
+	"copyright": "Copyright © 2026, Cameron Baybut",
+	"license": "MIT",
+	"name": "fin"
+}
