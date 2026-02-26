@@ -1,0 +1,2 @@
+# FIN
+This is my second go at both designing a programming language, and creating my own compiler and interpreter. I plan to first implement a working frontend (lexer and parser) then create an interpreter and compiler after. I hope to be able to reuse this interpreter in the future for other projects.
