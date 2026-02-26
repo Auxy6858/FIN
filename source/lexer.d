@@ -72,7 +72,7 @@ struct Lexer
         // Skip comments
         if(peekAhead(1) == "//")
         {
-            do { currentPos++; } while(source[currentPos != '\n']);
+            do { currentPos++; } while(source[currentPos] != '\n');
         }
 
         // Stop at the end of the source
