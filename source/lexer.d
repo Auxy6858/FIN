@@ -19,8 +19,17 @@ enum TokenKind
     Slash,
     BitWiseAnd,
     BitWiseOr,
+    BinaryShiftRight,
+    BinaryShiftLeft,
     IncrementVariable,
     DecrementVariable,
+    PlusEquals, // +=
+    MinusEquals, // -=
+    MultiplyEquals, // *=
+    DivideEquals, // /=
+    ModEquals,
+    BinaryShiftLeftEquals, // <<=
+    BinaryShiftRightEquals,
     // Comparators
     LessThan,
     GreaterThan,
@@ -153,7 +162,7 @@ struct Lexer
 
         if(currentPos >= source.length)
         {
-            return makeToken(TokenKind.EOF, "");
+            return makeToken(TokenKind.EOF, "EOF");
         }
         
         char currentChar = advance();
@@ -163,7 +172,7 @@ struct Lexer
             case '\n':
                 if(parenthesisDepth + braceDepth + bracketDepth > 0 || isContinuationToken(currentToken.kind))
                     return nextToken();
-                return makeToken(TokenKind.Newline, "");
+                return makeToken(TokenKind.Newline, "\n");
 
             case '"':   return lexString();
 
@@ -207,7 +216,7 @@ struct Lexer
                 if (isAlpha(currentChar) || currentChar == '_')
                     return lexIdentifierOrKeyword(currentChar);
                 if (isDigit(currentChar))
-                    return lexNumber();
+                    return lexNumber(currentChar);
                 // unknown character — skip it
                 return nextToken();
         }
@@ -224,19 +233,19 @@ struct Lexer
         return makeToken(TokenKind.StringLiteral, value);
     }
 
-    Token lexNumber()
+    Token lexNumber(char first)
     {
         bool isFloat = false;
-        if(peek() == '.')
-        {
-            isFloat = true;
-        }
         string value;
+        value ~= first;
         while(currentPos < source.length && (isDigit(peek()) || peek() == '.'))
         {
+            if(peek() == '.')
+            {
+                isFloat = true;
+            }
             value ~= advance();
         }
-
         return makeToken(isFloat ? TokenKind.FloatLiteral : TokenKind.NumericLiteral, value);
     }
 
@@ -249,23 +258,23 @@ struct Lexer
 
         switch (value)
         {
-            case "if":          return makeToken(TokenKind.IfKeyword, "");
-            case "else":        return makeToken(TokenKind.ElseKeyword, "");
-            case "for":         return makeToken(TokenKind.ForKeyword, "");
-            case "while":       return makeToken(TokenKind.WhileKeyword, "");
-            case "const":       return makeToken(TokenKind.ConstKeyword, "");
-            case "self":        return makeToken(TokenKind.SelfKeyword, "");
-            case "constructor": return makeToken(TokenKind.ConstructorKeyword, "");
-            case "class":       return makeToken(TokenKind.ClassKeyword, "");
-            case "return":      return makeToken(TokenKind.ReturnKeyword, "");
-            case "true":        return makeToken(TokenKind.BooleanLiteral, "");
-            case "false":       return makeToken(TokenKind.BooleanLiteral, "");
-            case "null":        return makeToken(TokenKind.NullLiteral, "");
-            case "int":         return makeToken(TokenKind.IntType, "");
-            case "float":       return makeToken(TokenKind.FloatType, "");
-            case "string":      return makeToken(TokenKind.StringType, "");
-            case "bool":        return makeToken(TokenKind.BooleanType, "");
-            case "void":        return makeToken(TokenKind.VoidType, "");
+            case "if":          return makeToken(TokenKind.IfKeyword, value);
+            case "else":        return makeToken(TokenKind.ElseKeyword, value);
+            case "for":         return makeToken(TokenKind.ForKeyword, value);
+            case "while":       return makeToken(TokenKind.WhileKeyword, value);
+            case "const":       return makeToken(TokenKind.ConstKeyword, value);
+            case "self":        return makeToken(TokenKind.SelfKeyword, value);
+            case "constructor": return makeToken(TokenKind.ConstructorKeyword, value);
+            case "class":       return makeToken(TokenKind.ClassKeyword, value);
+            case "return":      return makeToken(TokenKind.ReturnKeyword, value);
+            case "true":        return makeToken(TokenKind.BooleanLiteral, value);
+            case "false":       return makeToken(TokenKind.BooleanLiteral, value);
+            case "null":        return makeToken(TokenKind.NullLiteral, value);
+            case "int":         return makeToken(TokenKind.IntType, value);
+            case "float":       return makeToken(TokenKind.FloatType, value);
+            case "string":      return makeToken(TokenKind.StringType, value);
+            case "bool":        return makeToken(TokenKind.BooleanType, value);
+            case "void":        return makeToken(TokenKind.VoidType, value);
             default:            return makeToken(TokenKind.Identifier, value);
         }
     }
