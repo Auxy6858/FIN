@@ -1,0 +1,6 @@
+int x = 10
+string printHello() {
+    print("hello")
+}
+
+float number = 2.45

@@ -5,104 +5,292 @@ import std.stdio;
 
 enum TokenKind
 {
-    EOF,
-    OpenBrace,
-    CloseBrace,
-    OpenParen,
-    CloseParen,
+    // Literals
     NumericLiteral,
     StringLiteral,
-    Newline,
-    Equals,
+    BooleanLiteral,
+    FloatLiteral,
+    NullLiteral,
+
+    // Operators
     Plus,
     Minus,
-    Asterix,
+    Asterisk,
     Slash,
+    BitWiseAnd,
+    BitWiseOr,
+    IncrementVariable,
+    DecrementVariable,
+    // Comparators
     LessThan,
     GreaterThan,
     LessThanOrEqual,
     GreaterThanOrEqual,
+    EqualTo, // ==
+    NotEqualTo,
+    // Punctuation
+    OpenBrace, // {}
+    CloseBrace,
+    OpenParen, // ()
+    CloseParen,
+    OpenBracket, // []
+    CloseBracket,
     Comma,
+    Dot,
+    Colon,
+    // Keywords
     IfKeyword,
     ElseKeyword,
+    ForKeyword,
+    WhileKeyword,
+    ConstKeyword,
+    SelfKeyword,
+    ConstructorKeyword,
+    ClassKeyword,
+    ReturnKeyword,
+    // Types
     IntType,
-    // I'm wondering if I'll do a 64 or 32 bit signed intager as default
-    // decisions decisions 🤔
     StringType,
+    BooleanType,
+    VoidType,
+    FloatType,
+
+    // Misc
+    Newline,
+    Equals,
+    EOF,
+    Identifier
 }
 
 struct Token
 {
     TokenKind kind;
     string tokenValue;
+    size_t line;
+    size_t column;
 }
 
 struct Lexer
 {
     string source;
-    size_t currentPos;
+    size_t currentPos = 0;
     Token currentToken;
+    size_t currentLine = 1;
+    size_t currentColumn = 1;
+    size_t parenthesisDepth = 0;
+    size_t bracketDepth = 0;
+    size_t braceDepth = 0;
+
+    void incrementCurrentLine()
+    {
+        currentLine++;
+        currentColumn = 1;
+    }
+
+    char peek() const 
+    {
+        if(currentPos >= source.length) 
+        {
+            return '\0';
+        }
+        return source[currentPos];
+    }
+
+    char peekAhead() 
+    {
+        if(currentPos + 1 >= source.length)
+        {
+            return '\0';       
+        }
+        return source[currentPos + 1];
+    }
+
+    char advance()
+    {
+        char currentChar = source[currentPos++];
+        if(currentChar == '\n')
+        {
+            incrementCurrentLine();
+        } else {
+            currentColumn++;
+        }
+        return currentChar;
+    }
+
+    void skipWhitespace()
+    {
+        while (currentPos < source.length && peek() != '\n' && isWhite(peek()))
+            advance();
+    }
+
+    void skipComment()
+    {
+        while (currentPos < source.length && peek() != '\n')
+            advance();
+    }
+
+    Token makeToken(TokenKind kind, string value)
+    {
+        return Token(kind, value, currentLine, currentColumn);
+    }
 
     this(string input)
     {
         source = input;
-        popFront();
     }
 
-    bool empty() const => currentToken.kind == TokenKind.EOF;
+    bool isEmpty() const => currentToken.kind == TokenKind.EOF;
     Token front() const => currentToken;
-
-    string peekAhead(size_t peekOffset)
-    {
-        if(currentPos + peekOffset > source.length)
-        {
-            return "";
-        }
-        return source[currentPos .. currentPos + peekOffset + 1];
-    }
 
     void popFront()
     {
-        // Skip whitespace
-        while(currentPos < source.length && source[currentPos].isWhite)
-        {
-            currentPos++;
-        }
+        currentToken = nextToken();
+    }
 
-        // Skip comments
-        if(peekAhead(1) == "//")
-        {
-            do { currentPos++; } while(source[currentPos] != '\n');
-        }
+    Token nextToken()
+    {
+        skipWhitespace();
 
-        // Stop at the end of the source
         if(currentPos >= source.length)
         {
-            currentToken = Token(TokenKind.EOF, "");
-            return;
+            return makeToken(TokenKind.EOF, "");
         }
+        
+        char currentChar = advance();
 
-        char currentChar = source[currentPos];
-
-        if(isAlpha(currentChar))
+        switch (currentChar)
         {
-            size_t startingPos = currentPos;
-            while(currentPos < source.length && isAlpha(source[currentPos]))
-            {
-                currentPos++;
-            }
+            case '\n':
+                if(parenthesisDepth + braceDepth + bracketDepth > 0 || isContinuationToken(currentToken.kind))
+                    return nextToken();
+                return makeToken(TokenKind.Newline, "");
 
-            string lexeme = source[startingPos .. currentPos];
+            case '"':   return lexString();
 
-            switch ( lexeme )
-            {
-                case "let":
+            case '+':
+                if(peek() == '+') { advance(); return makeToken(TokenKind.IncrementVariable, "++"); }
+                return makeToken(TokenKind.Plus, "+");
+            case '-':
+                if(peek() == '-') { advance(); return makeToken(TokenKind.DecrementVariable, "--"); }
+                return makeToken(TokenKind.Minus, "-");
+            case '*':   return makeToken(TokenKind.Asterisk, "*");
+            case '/':
+                if(peek() == '/') { skipComment(); return nextToken(); }
+                return makeToken(TokenKind.Slash, "/");
 
-                
-                default:
-                    break;
-            }
+            case '=':
+                if(peek() == '=') { advance(); return makeToken(TokenKind.EqualTo, "=="); }
+                return makeToken(TokenKind.Equals, "=");
+            case '!':
+                if(peek() == '=') { advance(); return makeToken(TokenKind.NotEqualTo, "!="); }
+                return makeToken(TokenKind.EOF, ""); // bare ! not yet defined
+            case '<':
+                if(peek() == '=') { advance(); return makeToken(TokenKind.LessThanOrEqual, "<="); }
+                return makeToken(TokenKind.LessThan, "<");
+            case '>':
+                if(peek() == '=') { advance(); return makeToken(TokenKind.GreaterThanOrEqual, ">="); }
+                return makeToken(TokenKind.GreaterThan, ">");
+            case '&':   return makeToken(TokenKind.BitWiseAnd, "&");
+            case '|':   return makeToken(TokenKind.BitWiseOr, "|");
 
+            case '{':   braceDepth++;       return makeToken(TokenKind.OpenBrace, "{");
+            case '}':   braceDepth--;       return makeToken(TokenKind.CloseBrace, "}");
+            case '(':   parenthesisDepth++; return makeToken(TokenKind.OpenParen, "(");
+            case ')':   parenthesisDepth--; return makeToken(TokenKind.CloseParen, ")");
+            case '[':   bracketDepth++;     return makeToken(TokenKind.OpenBracket, "[");
+            case ']':   bracketDepth--;     return makeToken(TokenKind.CloseBracket, "]");
+            case ',':   return makeToken(TokenKind.Comma, ",");
+            case '.':   return makeToken(TokenKind.Dot, ".");
+            case ':':   return makeToken(TokenKind.Colon, ":");
+
+            default:
+                if (isAlpha(currentChar) || currentChar == '_')
+                    return lexIdentifierOrKeyword(currentChar);
+                if (isDigit(currentChar))
+                    return lexNumber();
+                // unknown character — skip it
+                return nextToken();
         }
     }
+
+    Token lexString()
+    {
+        string value;
+        while(currentPos < source.length && peek() != '"')
+        {
+            value ~= advance();
+        }
+        advance();
+        return makeToken(TokenKind.StringLiteral, value);
+    }
+
+    Token lexNumber()
+    {
+        bool isFloat = false;
+        if(peek() == '.')
+        {
+            isFloat = true;
+        }
+        string value;
+        while(currentPos < source.length && (isDigit(peek()) || peek() == '.'))
+        {
+            value ~= advance();
+        }
+
+        return makeToken(isFloat ? TokenKind.FloatLiteral : TokenKind.NumericLiteral, value);
+    }
+
+    Token lexIdentifierOrKeyword(char first)
+    {
+        string value;
+        value ~= first;
+        while (currentPos < source.length && (isAlphaNum(peek()) || peek() == '_'))
+            value ~= advance();
+
+        switch (value)
+        {
+            case "if":          return makeToken(TokenKind.IfKeyword, "");
+            case "else":        return makeToken(TokenKind.ElseKeyword, "");
+            case "for":         return makeToken(TokenKind.ForKeyword, "");
+            case "while":       return makeToken(TokenKind.WhileKeyword, "");
+            case "const":       return makeToken(TokenKind.ConstKeyword, "");
+            case "self":        return makeToken(TokenKind.SelfKeyword, "");
+            case "constructor": return makeToken(TokenKind.ConstructorKeyword, "");
+            case "class":       return makeToken(TokenKind.ClassKeyword, "");
+            case "return":      return makeToken(TokenKind.ReturnKeyword, "");
+            case "true":        return makeToken(TokenKind.BooleanLiteral, "");
+            case "false":       return makeToken(TokenKind.BooleanLiteral, "");
+            case "null":        return makeToken(TokenKind.NullLiteral, "");
+            case "int":         return makeToken(TokenKind.IntType, "");
+            case "float":       return makeToken(TokenKind.FloatType, "");
+            case "string":      return makeToken(TokenKind.StringType, "");
+            case "bool":        return makeToken(TokenKind.BooleanType, "");
+            case "void":        return makeToken(TokenKind.VoidType, "");
+            default:            return makeToken(TokenKind.Identifier, value);
+        }
+    }
+
+    bool isContinuationToken(TokenKind kind)
+    {
+        switch (kind)
+        {
+            case TokenKind.Plus:
+            case TokenKind.Minus:
+            case TokenKind.Asterisk:
+            case TokenKind.Slash:
+            case TokenKind.EqualTo:
+            case TokenKind.NotEqualTo:
+            case TokenKind.LessThan:
+            case TokenKind.GreaterThan:
+            case TokenKind.LessThanOrEqual:
+            case TokenKind.GreaterThanOrEqual:
+            case TokenKind.BitWiseAnd:
+            case TokenKind.BitWiseOr:
+            case TokenKind.Comma:
+            case TokenKind.Equals:
+                return true;
+            default:
+                return false;
+        }
+    }  
 }
