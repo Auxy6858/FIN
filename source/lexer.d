@@ -105,7 +105,8 @@ struct Lexer
         return source[currentPos];
     }
 
-    char peekAhead() 
+    // I've used a buffer of one rather than two, it seems to do the job for now. Hopefully this doesn't come back to bite me later.
+    char peekAhead()
     {
         if(currentPos + 1 >= source.length)
         {
@@ -178,6 +179,7 @@ struct Lexer
 
             case '+':
                 if(peek() == '+') { advance(); return makeToken(TokenKind.IncrementVariable, "++"); }
+                if(peek() == '=') {advance(); return makeToken(TokenKind.PlusEquals, "+="); }
                 return makeToken(TokenKind.Plus, "+");
             case '-':
                 if(peek() == '-') { advance(); return makeToken(TokenKind.DecrementVariable, "--"); }
@@ -185,6 +187,7 @@ struct Lexer
             case '*':   return makeToken(TokenKind.Asterisk, "*");
             case '/':
                 if(peek() == '/') { skipComment(); return nextToken(); }
+                if(peek() == '=') {advance(); return makeToken(TokenKind.DivideEquals, "/=");}
                 return makeToken(TokenKind.Slash, "/");
 
             case '=':

@@ -1,6 +1,15 @@
 int x = 10
 string printHello() {
     print("hello")
+    return ""
 }
 
 float number = 2.45
+
+dothings(
+    "hello",
+    6,
+    const
+)
+
+string greeting = "sup gamerz"
