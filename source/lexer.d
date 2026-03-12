@@ -173,7 +173,7 @@ struct Lexer
             case '\n':
                 if(parenthesisDepth + braceDepth + bracketDepth > 0 || isContinuationToken(currentToken.kind))
                     return nextToken();
-                return makeToken(TokenKind.Newline, "\n");
+                return makeToken(TokenKind.Newline, "\\n");
 
             case '"':   return lexString();
 

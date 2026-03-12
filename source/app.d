@@ -37,7 +37,7 @@ int main(string[] args)
 	while (!lexer.isEmpty())
 	{
 		Token tok = lexer.front();
-		writeln(tok.kind, " => ", tok.tokenValue);
+		writeln(i"$(tok.kind)('$(makeRed(tok.tokenValue))')");
 		lexer.popFront();
 	}
 	return(0);
