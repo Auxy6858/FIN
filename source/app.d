@@ -1,6 +1,7 @@
 import std.stdio;
 import std.file;
 import std.conv : text;
+import std.algorithm.searching.canFind;
 import lexer;
 
 int main(string[] args)
@@ -30,16 +31,20 @@ int main(string[] args)
 		return(1);
 	}
 
-	string source = std.file.readText(args[1]);
-	Lexer lexer = Lexer(source);
-	lexer.popFront();
-
-	while (!lexer.isEmpty())
+	if(canFind(args, "--lexfile"))
 	{
-		Token tok = lexer.front();
-		writeln(i"$(tok.kind)('$(makeRed(tok.tokenValue))')");
+		string source = std.file.readText(args[1]);
+		Lexer lexer = Lexer(source);
 		lexer.popFront();
+
+		while (!lexer.isEmpty())
+		{
+			Token tok = lexer.front();
+			writeln(i"$(tok.kind)('$(makeRed(tok.tokenValue))')");
+			lexer.popFront();
+		}
 	}
+	
 	return(0);
 
 
