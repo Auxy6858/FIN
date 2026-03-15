@@ -1,2 +1,7 @@
-# FIN
-This is my second go at both designing a programming language, and creating my own compiler and interpreter. I plan to first implement a working frontend (lexer and parser) then create an interpreter and compiler after. I hope to be able to reuse this interpreter in the future for other projects.
+<div align="center">
+	<img src="./fin.svg" width="150" align="center" />
+	<br/> <br/>
+	<strong>Simple and Powerful</strong>
+    <br/>
+    Fin is a statically typed language that aims to be simple enough to write basic scripts in, and powerful enough to maintain bigger codebases in. 
+</div>
