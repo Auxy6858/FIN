@@ -1,8 +1,9 @@
 import std.stdio;
 import std.file;
 import std.conv : text;
-import std.algorithm.searching.canFind;
-import lexer;
+import std.algorithm;
+import parser.lexer;
+import parser.parser;
 
 int main(string[] args)
 {
@@ -31,12 +32,12 @@ int main(string[] args)
 		return(1);
 	}
 
+	string source = std.file.readText(args[1]);
+	Lexer lexer = Lexer(source);
+	lexer.popFront();
+
 	if(canFind(args, "--lexfile"))
 	{
-		string source = std.file.readText(args[1]);
-		Lexer lexer = Lexer(source);
-		lexer.popFront();
-
 		while (!lexer.isEmpty())
 		{
 			Token tok = lexer.front();
@@ -44,6 +45,11 @@ int main(string[] args)
 			lexer.popFront();
 		}
 	}
+
+	Parser parser = Parser(&lexer);
+
+
+	
 	
 	return(0);
 

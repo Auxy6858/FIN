@@ -1,4 +1,4 @@
-module lexer;
+module parser.lexer;
 
 import std.ascii : isAlpha, isAlphaNum, isDigit, isWhite;
 import std.stdio;
@@ -90,13 +90,13 @@ struct Lexer
     size_t bracketDepth = 0;
     size_t braceDepth = 0;
 
-    void incrementCurrentLine()
+    private void incrementCurrentLine()
     {
         currentLine++;
         currentColumn = 1;
     }
 
-    char peek() const 
+    private char peek() const 
     {
         if(currentPos >= source.length) 
         {
@@ -106,7 +106,7 @@ struct Lexer
     }
 
     // I've used a buffer of one rather than two, it seems to do the job for now. Hopefully this doesn't come back to bite me later.
-    char peekAhead()
+    private char peekAhead()
     {
         if(currentPos + 1 >= source.length)
         {
@@ -115,7 +115,7 @@ struct Lexer
         return source[currentPos + 1];
     }
 
-    char advance()
+    private char advance()
     {
         char currentChar = source[currentPos++];
         if(currentChar == '\n')
@@ -127,19 +127,19 @@ struct Lexer
         return currentChar;
     }
 
-    void skipWhitespace()
+    private void skipWhitespace()
     {
         while (currentPos < source.length && peek() != '\n' && isWhite(peek()))
             advance();
     }
 
-    void skipComment()
+    private void skipComment()
     {
         while (currentPos < source.length && peek() != '\n')
             advance();
     }
 
-    Token makeToken(TokenKind kind, string value)
+    private Token makeToken(TokenKind kind, string value)
     {
         return Token(kind, value, currentLine, currentColumn);
     }
@@ -225,7 +225,7 @@ struct Lexer
         }
     }
 
-    Token lexString()
+    private Token lexString()
     {
         string value;
         while(currentPos < source.length && peek() != '"')
@@ -236,7 +236,7 @@ struct Lexer
         return makeToken(TokenKind.StringLiteral, value);
     }
 
-    Token lexNumber(char first)
+    private Token lexNumber(char first)
     {
         bool isFloat = false;
         string value;
@@ -252,7 +252,7 @@ struct Lexer
         return makeToken(isFloat ? TokenKind.FloatLiteral : TokenKind.NumericLiteral, value);
     }
 
-    Token lexIdentifierOrKeyword(char first)
+    private Token lexIdentifierOrKeyword(char first)
     {
         string value;
         value ~= first;
@@ -282,7 +282,7 @@ struct Lexer
         }
     }
 
-    bool isContinuationToken(TokenKind kind)
+    private bool isContinuationToken(TokenKind kind)
     {
         switch (kind)
         {
