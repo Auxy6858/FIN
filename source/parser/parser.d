@@ -2,6 +2,7 @@ module parser.parser;
 
 import parser.lexer;
 import ast;
+import lexer;
 
 enum BindingPower
 {
